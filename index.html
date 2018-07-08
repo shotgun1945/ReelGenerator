@@ -33,17 +33,35 @@
         		}
 	        })
 
+            $('#inputResultBtn').click(function() {
+                //$('#inputResult').empty();
+                $('#inputResult').append("input 1: " + $('#input1').val() + "<br>");
+                $('#inputResult').append("input 2: " + $('#input2').val() + "<br>");
+                $('#inputResult').append("input 3: " + $('#input3').val() + "<br>");
+            })
+
         })
     </script>
 </head>
 <body>
     <div class="container">
-      <div class="form-group">
-        <label for="selectNumber">Number:</label>
-        <input type="text" class="form-control" id="selectNumber" />
-        <input type="button" class="btn btn-default" id="selectNumberOK" value="OK" />
-      </div>
-      <div class="form-group" id="showForm"></div>
+        <div class="col-sm-6">
+            <div class="form-group">
+                input 1 <input type="text" class="form-control" id="input1" />
+                input 2 <input type="text" class="form-control" id="input2" />
+                input 3 <input type="text" class="form-control" id="input3" />
+                <input type="button" class="btn btn-default" id="inputResultBtn" value="button" />
+            </div>
+            <div id="inputResult"></div>
+        </div>
+        <div class="col-sm-6">
+            <div class="form-group">
+                <label for="selectNumber">Number:</label>
+                <input type="text" class="form-control" id="selectNumber" />
+                <input type="button" class="btn btn-default" id="selectNumberOK" value="OK" />
+            </div>
+            <div class="form-group" id="showForm"></div>
+        </div>
     </div>
 </body>
 
