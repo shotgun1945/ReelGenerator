@@ -1,13 +1,68 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8"/>
-
     <title>Page Title</title>
+    <meta charset="UTF-8"/>
+    <!-- 모바일 반응형을 위한 viewport 설정 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- [css] Bootstrap CDN -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <!-- [js] jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <!-- [js] Bootstrap 3 -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script>
+        $(function() {
+            function createInputForm() {
+                $('#showForm').empty();
+                var inputFormNumber = $('#selectNumber').val();
+                console.log(inputFormNumber)
+                for (var i = 1; i <= inputFormNumber; i++) {
+                    $('#showForm').append('<input type="text" class="form-control" id="inputForm" + i />');
+                    console.log("숫자" + i)
+                }
+            }
+
+            $('#selectNumberOK').click(function() {
+                createInputForm();
+            })
+
+            $('#selectNumber').on('keypress', function(e) {
+        		if(e.keyCode == 13) {
+        			createInputForm();
+        		}
+	        })
+
+            $('#inputResultBtn').click(function() {
+                //$('#inputResult').empty();
+                $('#inputResult').append("input 1: " + $('#input1').val() + "<br>");
+                $('#inputResult').append("input 2: " + $('#input2').val() + "<br>");
+                $('#inputResult').append("input 3: " + $('#input3').val() + "<br>");
+            })
+
+        })
+    </script>
 </head>
 <body>
-        <script src="js/kakaoCache.js" type="text/javascript">
-        </script>   
-
+    <div class="container">
+        <div class="col-sm-6">
+            <div class="form-group">
+                input 1 <input type="text" class="form-control" id="input1" />
+                input 2 <input type="text" class="form-control" id="input2" />
+                input 3 <input type="text" class="form-control" id="input3" />
+                <input type="button" class="btn btn-default" id="inputResultBtn" value="button" />
+            </div>
+            <div id="inputResult"></div>
+        </div>
+        <div class="col-sm-6">
+            <div class="form-group">
+                <label for="selectNumber">Number:</label>
+                <input type="text" class="form-control" id="selectNumber" />
+                <input type="button" class="btn btn-default" id="selectNumberOK" value="OK" />
+            </div>
+            <div class="form-group" id="showForm"></div>
+        </div>
+    </div>
 </body>
+
 </html>
