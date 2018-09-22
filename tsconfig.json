@@ -1,13 +1,15 @@
 {
     "compilerOptions": {
-        "module": "commonjs",
-        "noImplicitAny": true,
+        "target": "es6",
+        "sourceMap": true,
+        "outDir": "src/js",
         "removeComments": true,
-        "preserveConstEnums": true,
-        "outDir": "js/"
-        // "sourceMap": true
+        "outFile": "src/js/reel_generator.js",
+        "typeRoots": [
+            "./src/ts"
+        ]
     },
     "include": [
-        "ts/*"
-    ]
+        "src/**/*"
+    ],
 }
