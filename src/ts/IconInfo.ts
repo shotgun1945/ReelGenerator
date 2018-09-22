@@ -8,6 +8,10 @@ class IconInfo { //공통 정보
       public stackCount: number = 1
     ) {
       this.remainCount = maxCount;
+      if(iconFixposition >= 0 && maxCount != stackCount)
+      {
+        throw "1스택으로 존재할때만 fixposition이 작동합니다.";
+      }
     }
   
     /**

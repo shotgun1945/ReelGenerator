@@ -17,6 +17,9 @@ class IconInfo {
         this.stackCount = stackCount;
         this.remainCount = 0;
         this.remainCount = maxCount;
+        if (iconFixposition >= 0 && maxCount != stackCount) {
+            throw "1스택으로 존재할때만 fixposition이 작동합니다.";
+        }
     }
     IsSameIcon(targetIcon, compareStack = false) {
         return (this.iconId === targetIcon.iconId &&
@@ -51,11 +54,13 @@ class Reel {
         });
     }
     setIconInfo(iconInfo) {
-        for (let index = 0; index < this.IconInfoArray.length; index++) {
-            const element = this.IconInfoArray[index];
-            if (element.IsSameIcon(iconInfo, true)) {
-                return;
-            }
+        const sameIcon = this.IconInfoArray.find(element => element.IsSameIcon(iconInfo, true));
+        if (sameIcon != null) {
+            return;
+        }
+        if (iconInfo.iconFixposition >= 0) {
+            const fixPosition = iconInfo.iconFixposition;
+            this.SetIconInIndex(iconInfo, fixPosition, true);
         }
         this.IconInfoArray.push(iconInfo);
     }
@@ -114,26 +119,39 @@ class Reel {
         }
         return this.sortedIconDataArray;
     }
+    SetIconInIndex(iconInfo, currentIndex, decereaseRemainCount) {
+        if (this.sortedIconDataArray[currentIndex] != null) {
+            console.log("seticoninIndex erreor position " + currentIndex + "is not null ");
+        }
+        this.sortedIconDataArray[currentIndex] = new Icon(iconInfo, currentIndex, this.index);
+        if (decereaseRemainCount) {
+            iconInfo.remainCount--;
+        }
+    }
     FindNextIcon(currentIndex) {
         if (currentIndex === this.length)
             return true;
-        const stack = this.GetNextList(currentIndex);
         let isSuccessed = false;
-        console.log(currentIndex, " stack : ", PrintIconInfoArray(stack));
-        for (let i = 0; i < stack.length; i++) {
-            const element = stack[i];
-            this.sortedIconDataArray[currentIndex] = new Icon(element, currentIndex, this.index);
-            element.remainCount--;
-            isSuccessed = this.FindNextIcon(currentIndex + 1);
-            if (isSuccessed === true) {
-                break;
+        if (this.sortedIconDataArray[currentIndex] == null) {
+            const currentlist = this.GetNextList(currentIndex);
+            console.log(currentIndex, " currentlist : ", PrintIconInfoArray(currentlist));
+            for (let i = 0; i < currentlist.length; i++) {
+                const element = currentlist[i];
+                this.SetIconInIndex(element, currentIndex, true);
+                isSuccessed = this.FindNextIcon(currentIndex + 1);
+                if (isSuccessed === true) {
+                    break;
+                }
+                else {
+                    element.remainCount++;
+                }
             }
-            else {
-                element.remainCount++;
+            if (!isSuccessed) {
+                this.sortedIconDataArray[currentIndex] = null;
             }
         }
-        if (!isSuccessed) {
-            this.sortedIconDataArray[currentIndex] = null;
+        else {
+            isSuccessed = this.FindNextIcon(currentIndex + 1);
         }
         return isSuccessed;
     }

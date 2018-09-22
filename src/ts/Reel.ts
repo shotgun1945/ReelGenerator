@@ -29,12 +29,15 @@ class Reel
     }
 
     public setIconInfo(iconInfo: IconInfo) {
-        for (let index = 0; index < this.IconInfoArray.length; index++) 
+        const sameIcon = this.IconInfoArray.find(element => element.IsSameIcon(iconInfo, true));
+        if(sameIcon != null)
         {
-            const element = this.IconInfoArray[index];
-            if (element.IsSameIcon(iconInfo, true)) {
-                return;
-            }
+            return;
+        }
+        if(iconInfo.iconFixposition >= 0)
+        {
+            const fixPosition = iconInfo.iconFixposition;
+            this.SetIconInIndex(iconInfo, fixPosition, true);
         }
         this.IconInfoArray.push(iconInfo);
     }
@@ -43,7 +46,7 @@ class Reel
         let result = false;
         let checkLength = 1;
         if (newIconInfo.blockdSameDisplay) {
-        checkLength = m_ReelDisplayHeight;
+            checkLength = m_ReelDisplayHeight;
         }
         //TODO::Check StackSymbol
         for (let i = -checkLength; i <= checkLength; i++) {
@@ -107,35 +110,53 @@ class Reel
         return this.sortedIconDataArray;
     }
 
-    public FindNextIcon(currentIndex: number): boolean {
-        if (currentIndex === this.length) return true;
-        const stack: Array<IconInfo> = this.GetNextList(currentIndex);
-        let isSuccessed = false;
-        console.log(currentIndex, " stack : ", PrintIconInfoArray(stack));
-
-        for (let i: number = 0; i < stack.length; i++) 
-        {
-            const element = stack[i];
-            //ToDO: Add StackSymbol
-
-            this.sortedIconDataArray[currentIndex] = new Icon(
-                element,
-                currentIndex,
-                this.index
-            );
-            element.remainCount--;
-            isSuccessed = this.FindNextIcon(currentIndex + 1);
-            if (isSuccessed === true) {
-                break;
-            } 
-            else 
-            {
-                element.remainCount++;
-            }
+    public SetIconInIndex(iconInfo:IconInfo, currentIndex:number, decereaseRemainCount:boolean)
+    {
+        if(this.sortedIconDataArray[currentIndex] != null){
+            console.log("seticoninIndex erreor position " + currentIndex+ "is not null " );
+        }
+        this.sortedIconDataArray[currentIndex] = new Icon(
+            iconInfo,
+            currentIndex,
+            this.index
+        );
+        if(decereaseRemainCount){
+            iconInfo.remainCount--;
         }
 
-        if (!isSuccessed) {
-        this.sortedIconDataArray[currentIndex] = null;
+    }
+
+    public FindNextIcon(currentIndex: number): boolean {
+        if (currentIndex === this.length) return true;
+        let isSuccessed = false;
+        if(this.sortedIconDataArray[currentIndex] == null)
+        {
+            const currentlist: Array<IconInfo> = this.GetNextList(currentIndex);
+            console.log(currentIndex, " currentlist : ", PrintIconInfoArray(currentlist));
+    
+            for (let i: number = 0; i < currentlist.length; i++) 
+            {
+                const element = currentlist[i];
+                //ToDO: Add StackSymbol
+    
+                this.SetIconInIndex(element, currentIndex, true);
+                isSuccessed = this.FindNextIcon(currentIndex + 1);
+                if (isSuccessed === true) {
+                    break;
+                } 
+                else 
+                {
+                    element.remainCount++;
+                }
+            }
+
+            if (!isSuccessed) {
+                this.sortedIconDataArray[currentIndex] = null;
+            }
+        }
+        else
+        {
+            isSuccessed = this.FindNextIcon(currentIndex + 1);
         }
 
         return isSuccessed;
