@@ -81,7 +81,7 @@ class Reel {
         }
         return result;
     }
-    GetNextStack(currentIndex) {
+    GetNextList(currentIndex) {
         const resultArray = new Array();
         this.IconInfoArray.forEach(element => {
             if (element.remainCount <= 0) {
@@ -117,7 +117,7 @@ class Reel {
     FindNextIcon(currentIndex) {
         if (currentIndex === this.length)
             return true;
-        const stack = this.GetNextStack(currentIndex);
+        const stack = this.GetNextList(currentIndex);
         let isSuccessed = false;
         console.log(currentIndex, " stack : ", PrintIconInfoArray(stack));
         for (let i = 0; i < stack.length; i++) {
