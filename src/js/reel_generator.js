@@ -167,7 +167,7 @@ function PrintIconInfoArray(array) {
 }
 function main() {
     const reel = new Reel(0, 30);
-    const iconInfo1 = new IconInfo(1, 1);
+    const iconInfo1 = new IconInfo(1, 1, true, 0);
     const iconInfo2 = new IconInfo(2, 5);
     const iconInfo3 = new IconInfo(3, 8, false, -1);
     const iconInfo4 = new IconInfo(4, 8, false, -1);
@@ -206,7 +206,9 @@ function VerrifyResult(result, iconInfoArray) {
             }
         }
         if (icon.iconInfo.blockdSameDisplay) {
-            for (let displayHeight = 0; displayHeight < m_ReelDisplayHeight; displayHeight++) {
+            for (let displayHeight = -m_ReelDisplayHeight + 1; displayHeight < m_ReelDisplayHeight; displayHeight++) {
+                if (displayHeight == 0)
+                    continue;
                 let displayIndex = CalculateIndexWithOffset(index, displayHeight, m_ReelDisplayHeight);
                 const element = result[displayIndex];
                 if (element.IsSameIcon(icon)) {
