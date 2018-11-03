@@ -1,8 +1,30 @@
 
 <!DOCTYPE html>
 <html>
-    <head><title>TypeScript Greeter</title></head>
+    <head><title>Reel Generator</title></head>
     <body>
         <script src="src/js/reel_generator.js"></script>
+        <!-- <script src="src/js/index.js"></script> -->
+        <ul>
+            <li>
+                Reel Count : <input id="reel_count_input" type="number" placeholder="Reel Count" title="Reel Count" value="3"/>
+            </li>
+            <li>
+                Reel Height : <input id="reel_height_input" type="number" placeholder="Reel Height" title="Reel Height" value="3"/>
+            </li>
+            <li>
+                Reel Display Height : <input id="reel_display_height_input" type="number" placeholder="Reel Display Height" title="Reel Display Height" value="3"/>
+            </li>
+            <li>
+                Icon Count :<input id="icon_count_input" type="number" placeholder="Icon Count" title="Icon Count" value="3"/>
+            </li>
+        </ul>
+        <button id="addReelButton" title="Add">AddReel</button>
+        <div id="reel_gen_div">
+
+        </div>
+        
+        <button id="runButton" title="Run">Yap!</button>
+        <button id="saveButton" title="Save">Save Cookie</button>
     </body>
 </html>

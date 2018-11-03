@@ -16,37 +16,33 @@ class Reel
     private sortedIconDataArray: Icon[];
     private notSoredIconDataArray: Icon[];
     private IconInfoArray: IconInfo[];
-    constructor(public index: number, public length: number) {
+    constructor(public index: number, public length: number, public reelDisplayHeight:number) {
         this.sortedIconDataArray = new Array<Icon>(length);
         this.notSoredIconDataArray = new Array<Icon>(length);
         this.IconInfoArray = new Array<IconInfo>();
     }
 
-    public setIconInfoArray(iconInfo: IconInfo[]) {
-        iconInfo.forEach(element => {
-        this.setIconInfo(element);
+    public setIconInfoArray(iconInfos: IconInfo[]) {
+        iconInfos.forEach(iconInfo => {
+            const sameIcon = this.IconInfoArray.find(element => element.IsSameIcon(iconInfo, true));
+            if(sameIcon != null)
+            {
+                return;
+            }
+            if(iconInfo.iconFixposition >= 0)
+            {
+                const fixPosition = iconInfo.iconFixposition;
+                this.SetIconInIndex(iconInfo, fixPosition, true);
+            }
+            this.IconInfoArray.push(iconInfo);
         });
-    }
-
-    public setIconInfo(iconInfo: IconInfo) {
-        const sameIcon = this.IconInfoArray.find(element => element.IsSameIcon(iconInfo, true));
-        if(sameIcon != null)
-        {
-            return;
-        }
-        if(iconInfo.iconFixposition >= 0)
-        {
-            const fixPosition = iconInfo.iconFixposition;
-            this.SetIconInIndex(iconInfo, fixPosition, true);
-        }
-        this.IconInfoArray.push(iconInfo);
     }
 
     private isDuplicated(newIconInfo: IconInfo, currentIndex: number): boolean {
         let result = false;
         let checkLength = 1;
         if (newIconInfo.blockdSameDisplay) {
-            checkLength = m_ReelDisplayHeight;
+            checkLength = this.reelDisplayHeight;
         }
         //TODO::Check StackSymbol
         for (let i = -checkLength; i <= checkLength; i++) {

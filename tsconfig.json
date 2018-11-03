@@ -6,10 +6,9 @@
         "removeComments": true,
         "outFile": "src/js/reel_generator.js",
         "typeRoots": [
-            "./src/ts"
+            "./src/ts/module",
+            "./src/ts/ui",
         ]
     },
-    "include": [
-        "src/**/*"
-    ],
+    "include": ["src/**/*"]
 }
