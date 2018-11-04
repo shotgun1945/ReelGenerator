@@ -1,5 +1,4 @@
 
-///현재 미사용.
 class Icon {
     constructor(
       public iconInfo: IconInfo,

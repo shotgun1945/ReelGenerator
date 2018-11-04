@@ -1,21 +1,3 @@
-
-function CheckWhile(
-  whileCount: number,
-  exception: string,
-  RepeatFunction: Function,
-  CheckFunc: Function
-) {
-  var whileRemainCount: number = whileCount;
-  while (CheckFunc) {
-    RepeatFunction();
-    whileRemainCount--;
-    if (whileRemainCount < 0) {
-      break;
-    }
-    throw exception;
-  }
-}
-
 function PrintIconArray(array: Array<Icon>): string {
   let resultString = "";
   array.forEach(element => {

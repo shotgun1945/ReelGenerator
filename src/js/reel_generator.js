@@ -174,17 +174,6 @@ class Reel {
         return isSuccessed;
     }
 }
-function CheckWhile(whileCount, exception, RepeatFunction, CheckFunc) {
-    var whileRemainCount = whileCount;
-    while (CheckFunc) {
-        RepeatFunction();
-        whileRemainCount--;
-        if (whileRemainCount < 0) {
-            break;
-        }
-        throw exception;
-    }
-}
 function PrintIconArray(array) {
     let resultString = "";
     array.forEach(element => {
@@ -295,43 +284,61 @@ function CalculateIndexWithOffset(currentIndex, offset, maxValue) {
 }
 class Dynamically_create_element {
     constructor() {
-        this.m_CreatedElementMap = new Object();
+        this.m_CreatedElementMap = new Map();
     }
-    Create_Element(type, attribute, parentName, elementCount) {
-        let parent = document.getElementById(parentName);
-        let element = document.createElement(type);
-        element.setAttribute("type", attribute["type"]);
-        element.setAttribute("value", attribute["value"]);
-        element.setAttribute("id", attribute["id"]);
-        parent.appendChild(element);
-        this.m_CreatedElementMap[attribute["id"]] = element;
-        return element;
-    }
-    Create_Element_FindFunction(type, attribute, getParent, elementCount) {
-        let parent = getParent();
-        let element = document.createElement(type);
-        element.setAttribute("type", attribute[0]);
-        element.setAttribute("value", attribute[1]);
-        element.setAttribute("id", attribute[2]);
-        parent.appendChild(element);
-        this.m_CreatedElementMap[attribute[2]] = element;
+    CreateElementWithAttributeMap(type, attribute, getParent, elementCount) {
+        const element = document.createElement(type);
+        console.log(attribute);
+        if (attribute != null) {
+            attribute.forEach((value, key) => element.setAttribute(key, value));
+            this.m_CreatedElementMap.set(attribute.get("id"), element);
+        }
+        this.m_CreatedElementMap.set("test", null);
+        if (getParent != null)
+            getParent().appendChild(element);
+        console.log(this.m_CreatedElementMap);
         return element;
     }
 }
 function getReelIconElementName(reel_index, icon_index) {
     return reel_index + "_" + icon_index;
 }
-let m_creatElement = null;
+function parseElementNameToReelIconIndex(id) {
+    let parsedNumbers = id.split('_').map(s => parseInt(s));
+    return { reel_index: parsedNumbers[0], icon_index: parsedNumbers[1] };
+}
+function getReelIconElementByIndexInfo(reelIndex, iconIndex) {
+    const key = getReelIconElementName(reelIndex, iconIndex);
+    return m_ElemenetCreator.m_CreatedElementMap.get(key);
+}
+function GetValueAboutCreatedInputElement(reelIndex, iconIndex) {
+    const element = getReelIconElementByIndexInfo(reelIndex, iconIndex);
+    if (element != undefined || element != null) {
+        return element.value;
+    }
+    else {
+        throw "GetValueAboutCreatedInputElement :: finded element(reelIndex : " + reelIndex + ", iconIndex : " + iconIndex + ") is " + element;
+    }
+}
+function CalculateReelTotalIconCount(reelIndex) {
+    let result = 0;
+    for (let iconIndex = 0; iconIndex < m_ReelGenerator.iconCount; iconIndex++) {
+        const element = GetValueAboutCreatedInputElement(reelIndex, iconIndex);
+        result += parseInt(element);
+    }
+    return result;
+}
+let m_ElemenetCreator = null;
 let m_ReelGenerator = null;
 window.onload = () => {
-    let addReelButton = document.getElementById('addReelButton');
+    const addReelButton = document.getElementById('addReelButton');
     addReelButton.onclick = function () {
-        let reelCount = parseInt(document.getElementById("reel_count_input").value);
-        let reelHeight = parseInt(document.getElementById("reel_height_input").value);
-        let reelDisplayHeight = parseInt(document.getElementById("reel_display_height_input").value);
-        let iconCount = parseInt(document.getElementById("icon_count_input").value);
-        if (m_creatElement == null)
-            m_creatElement = new Dynamically_create_element();
+        const reelCount = parseInt(document.getElementById("reel_count_input").value);
+        const reelHeight = parseInt(document.getElementById("reel_height_input").value);
+        const reelDisplayHeight = parseInt(document.getElementById("reel_display_height_input").value);
+        const iconCount = parseInt(document.getElementById("icon_count_input").value);
+        if (m_ElemenetCreator == null)
+            m_ElemenetCreator = new Dynamically_create_element();
         if (m_ReelGenerator == null)
             m_ReelGenerator = new ReelGenerator(reelCount, reelHeight, reelDisplayHeight, iconCount);
         let reelParent = document.getElementById("reel_gen_div");
@@ -345,31 +352,35 @@ window.onload = () => {
                 reelId = "reel_" + reelIndex;
             }
             reelUl.id = reelId;
-            let label = m_creatElement.Create_Element_FindFunction("label", ["", "", "reel_label_" + reelIndex], function () { return reelUl; }, 1);
+            let label = m_ElemenetCreator.CreateElementWithAttributeMap("label", new Map([["id", "reel_+label_" + reelIndex]]), null, 1);
             if (reelIndex == -1) {
                 label.innerText = "iconIndex";
             }
             else {
                 label.innerText = "reel" + reelIndex;
             }
+            reelUl.appendChild(label);
+            const iconTotalCountLabel = m_ElemenetCreator.CreateElementWithAttributeMap("label", null, function () { return reelUl; }, 1);
+            const onChangeEachIconCountFunc = (reelIndex) => { iconTotalCountLabel.innerText = CalculateReelTotalIconCount(reelIndex).toString(); };
             for (let iconIndex = 0; iconIndex < iconCount; iconIndex++) {
                 let defaultValue = 0;
                 if (reelIndex == -1)
                     defaultValue = iconIndex + 1;
-                let iconLabel = m_creatElement.Create_Element_FindFunction("input", ["number", defaultValue.toString(), getReelIconElementName(reelIndex, iconIndex)], function () { return reelUl; }, 1);
-                iconLabel.addEventListener("change", function (ev) { console.log(this.value + "," + this.id); });
+                let iconLabel = m_ElemenetCreator.CreateElementWithAttributeMap("input", new Map([["type", "number"], ["value", defaultValue.toString()], ["id", getReelIconElementName(reelIndex, iconIndex)]]), function () { return reelUl; }, 1);
+                iconLabel.addEventListener("change", (ev) => onChangeEachIconCountFunc(parseElementNameToReelIconIndex(ev.target.id).reel_index));
             }
+            reelUl.appendChild(iconTotalCountLabel);
             reelParent.appendChild(reelUl);
         }
     };
-    var runButton = document.getElementById('runButton');
-    runButton.onclick = function () {
-        if (m_creatElement == null)
+    var ReelGeneratorButton = document.getElementById('ReelGeneratorButton');
+    ReelGeneratorButton.onclick = function () {
+        if (m_ElemenetCreator == null)
             return;
         for (let reelIndex = 0; reelIndex < m_ReelGenerator.reelCount; reelIndex++) {
             for (let iconIndex = 0; iconIndex < m_ReelGenerator.iconCount; iconIndex++) {
-                let reelIconCountInput = m_creatElement.m_CreatedElementMap[getReelIconElementName(reelIndex, iconIndex)];
-                if (reelIconCountInput !== null && reelIconCountInput !== undefined) {
+                let reelIconCountInput = m_ElemenetCreator.m_CreatedElementMap[getReelIconElementName(reelIndex, iconIndex)];
+                if (reelIconCountInput != null && reelIconCountInput != undefined) {
                     let value = parseInt(reelIconCountInput.value);
                 }
                 else {
