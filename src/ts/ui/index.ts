@@ -1,18 +1,29 @@
+let m_ElemenetCreator:Dynamically_create_element = null;
+let m_ReelGenerator:ReelGenerator = null;
+
 class Dynamically_create_element
 {
     public m_CreatedElementMap:Map<string, HTMLElement> = new Map<string, HTMLElement>();
     
-    public CreateElementWithAttributeMap(type:string, attribute:Map<string, string>, getParent:Function, elementCount:number):HTMLElement{        
+    public CreateManyElementWithAttribute(type:string, attribute:[[string,string]], getParent:Function, elementCount:number, getId:Function):Array<HTMLElement>{        
+        const resultArray:Array<HTMLElement> = new Array<HTMLElement>();
+        for (let index = 0; index < elementCount; index++) {
+            if(getId != null) attribute.push(["id", getId(index)]);
+
+            resultArray.push(this.CreateElementWithAttribute(type, attribute, getParent));
+        }
+
+        return resultArray;
+    }
+
+    public CreateElementWithAttribute(type:string, attribute:[[string,string]], getParent:Function):HTMLElement{       
         const element = document.createElement(type);
-        console.log(attribute);
         if(attribute != null)
         {
-            attribute.forEach( (value, key)=>element.setAttribute(key, value) );
-            this.m_CreatedElementMap.set(attribute.get("id"), element);
+            attribute.forEach( (atSet,index)=>element.setAttribute(atSet[0], atSet[1]) );
+            this.m_CreatedElementMap.set(element.id, element);
         }
-        this.m_CreatedElementMap.set("test", null);
         if(getParent != null) getParent().appendChild(element);
-        console.log(this.m_CreatedElementMap);
         
         return element;
     }
@@ -39,12 +50,10 @@ function GetValueAboutCreatedInputElement(reelIndex:number, iconIndex:number):st
 {
     const element:HTMLInputElement = <HTMLInputElement>getReelIconElementByIndexInfo(reelIndex, iconIndex);
 
-    if(element != undefined || element != null)
-    {
+    if(element != undefined || element != null){
         return element.value;
     }
-    else
-    {
+    else{
         throw "GetValueAboutCreatedInputElement :: finded element(reelIndex : " + reelIndex + ", iconIndex : "+iconIndex+") is " + element;
     }
     
@@ -61,62 +70,39 @@ function CalculateReelTotalIconCount(reelIndex:number):number
     return result;
 }
 
+function makeReelInfoInputUi()
+{
+    const reelCount = parseInt((<HTMLInputElement>document.getElementById("reel_count_input")).value);
+    const reelHeight = parseInt((<HTMLInputElement>document.getElementById("reel_height_input")).value);
+    const reelDisplayHeight = parseInt((<HTMLInputElement>document.getElementById("reel_display_height_input")).value);
+    const iconCount = parseInt((<HTMLInputElement>document.getElementById("icon_count_input")).value);
+    if(m_ElemenetCreator == null) m_ElemenetCreator = new Dynamically_create_element();
+    if(m_ReelGenerator == null) m_ReelGenerator = new ReelGenerator(reelCount, reelHeight, reelDisplayHeight, iconCount );
+    
+    let reelParent = document.getElementById("reel_gen_div");
+    for (let reelIndex = -1; reelIndex < reelCount; reelIndex++) {
 
-let m_ElemenetCreator:Dynamically_create_element = null;
-let m_ReelGenerator:ReelGenerator = null;
+        const reelUl = m_ElemenetCreator.CreateElementWithAttribute("ul", [["id", reelIndex == -1 ? "iconIndexInfos" : "reel_"+reelIndex ]], ()=>{return reelParent} );
+        const label = m_ElemenetCreator.CreateElementWithAttribute("label", [["id", "reel_+label_" + reelIndex]], ()=>{return reelUl;});
+        label.innerText = reelIndex == -1 ? "iconIndex" : "reel" + reelIndex;
+
+        const iconInputArray = m_ElemenetCreator.CreateManyElementWithAttribute("input", [["type", "number"]], ()=> { return reelUl; }, iconCount, (iconIndex)=>getReelIconElementName(reelIndex, iconIndex));
+        iconInputArray.forEach((iconInput, iconIndex)=>iconInput.setAttribute("value", reelIndex == -1 ? (iconIndex+1).toString(): "0"));
+        // ["value", defaultValue.toString()],
+        if(reelIndex != -1 ) {
+            const iconTotalCountLabel = m_ElemenetCreator.CreateElementWithAttribute("label", null, function():HTMLElement { return reelUl; });
+            const onChangeEachIconCountFunc = (reelIndex:number)=>{iconTotalCountLabel.innerText = " total count : "+CalculateReelTotalIconCount(reelIndex).toString()}
+            iconInputArray.forEach((iconInput)=>iconInput.addEventListener("change", (ev:Event) => onChangeEachIconCountFunc( parseElementNameToReelIconIndex( (<HTMLElement>ev.target).id).reel_index)));
+            
+        }
+    }
+}
+
 window.onload = () =>
 {
     const addReelButton = document.getElementById('addReelButton');
     
-    addReelButton.onclick = function (){
-        const reelCount = parseInt((<HTMLInputElement>document.getElementById("reel_count_input")).value);
-        const reelHeight = parseInt((<HTMLInputElement>document.getElementById("reel_height_input")).value);
-        const reelDisplayHeight = parseInt((<HTMLInputElement>document.getElementById("reel_display_height_input")).value);
-        const iconCount = parseInt((<HTMLInputElement>document.getElementById("icon_count_input")).value);
-        if(m_ElemenetCreator == null) m_ElemenetCreator = new Dynamically_create_element();
-        if(m_ReelGenerator == null) m_ReelGenerator = new ReelGenerator(reelCount, reelHeight, reelDisplayHeight, iconCount );
-        
-        let reelParent = document.getElementById("reel_gen_div");
-        for (let reelIndex = -1; reelIndex < reelCount; reelIndex++) {
-            let reelUl = document.createElement("ul");
-            let reelId:string
-            if(reelIndex == -1) {
-                reelId = "iconIndexInfos";
-            }
-            else {
-                reelId = "reel_"+reelIndex;
-            }
-            reelUl.id = reelId;
-
-            let label = m_ElemenetCreator.CreateElementWithAttributeMap("label", new Map<string, string>([["id", "reel_+label_" + reelIndex]]), null, 1);
-            if (reelIndex == -1) {
-                label.innerText = "iconIndex";
-            }
-            else{
-                label.innerText = "reel" + reelIndex;
-            }
-            reelUl.appendChild(label);
-
-            const iconTotalCountLabel = m_ElemenetCreator.CreateElementWithAttributeMap("label", null, function():HTMLElement { return reelUl; }, 1);
-            
-            const onChangeEachIconCountFunc = (reelIndex:number)=>{iconTotalCountLabel.innerText = CalculateReelTotalIconCount(reelIndex).toString()}
-            for (let iconIndex = 0; iconIndex < iconCount; iconIndex++) {
-                let defaultValue = 0;
-                if(reelIndex == -1) defaultValue = iconIndex + 1;
-                let iconLabel:HTMLInputElement = <HTMLInputElement>m_ElemenetCreator.CreateElementWithAttributeMap("input", 
-                    new Map<string, string>([ ["type", "number"], ["value", defaultValue.toString()], ["id", getReelIconElementName(reelIndex, iconIndex)] ])
-                    , function():HTMLElement { return reelUl; }, 1);
-                // if(reelIndex != -1) iconLabel.onchange = function():void{console.log(iconLabel.value);};
-
-
-                iconLabel.addEventListener("change", (ev:Event) => onChangeEachIconCountFunc( parseElementNameToReelIconIndex( (<HTMLElement>ev.target).id).reel_index));
-
-            }
-
-            reelUl.appendChild(iconTotalCountLabel);
-            reelParent.appendChild(reelUl);
-        }
-    };
+    addReelButton.onclick = makeReelInfoInputUi;
 
     var ReelGeneratorButton = document.getElementById('ReelGeneratorButton');
     ReelGeneratorButton.onclick = function():void
@@ -127,13 +113,10 @@ window.onload = () =>
             let reelIconCountInput:HTMLInputElement = m_ElemenetCreator.m_CreatedElementMap[getReelIconElementName(reelIndex, iconIndex)];
             if (reelIconCountInput != null && reelIconCountInput != undefined) {
                 let value = parseInt(reelIconCountInput.value);
-                
             }
-            else
-            {
+            else{
                 console.error(reelIndex + ", " + iconIndex +" input is not founded");
             }
-
           }
         }
     };
