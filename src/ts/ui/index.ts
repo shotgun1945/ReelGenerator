@@ -108,17 +108,29 @@ window.onload = () =>
     ReelGeneratorButton.onclick = function():void
     {
         if(m_ElemenetCreator == null) return;
-        for (let reelIndex = 0; reelIndex < m_ReelGenerator.reelCount; reelIndex++) {
-          for (let iconIndex = 0; iconIndex < m_ReelGenerator.iconCount; iconIndex++) {
-            let reelIconCountInput:HTMLInputElement = m_ElemenetCreator.m_CreatedElementMap[getReelIconElementName(reelIndex, iconIndex)];
-            if (reelIconCountInput != null && reelIconCountInput != undefined) {
-                let value = parseInt(reelIconCountInput.value);
-            }
-            else{
-                console.error(reelIndex + ", " + iconIndex +" input is not founded");
-            }
-          }
+        let iconInfoMap:Array<Array<IconInfo>> = new Array<Array<IconInfo>>();
+        let iconIndexArray:Array<number> = new Array<number>();
+        for (let iconIndex = 0; iconIndex < m_ReelGenerator.iconCount; iconIndex++) {
+            let iconId = parseInt((<HTMLInputElement>getReelIconElementByIndexInfo(-1, iconIndex)).value);
+            iconIndexArray.push(iconId);
         }
+        for (let reelIndex = 0; reelIndex < m_ReelGenerator.reelCount; reelIndex++) {
+            let iconInfoArray:Array<IconInfo> = new Array<IconInfo>();
+            for (let iconIndex = 0; iconIndex < m_ReelGenerator.iconCount; iconIndex++) {
+                let reelIconCountInput:HTMLInputElement = <HTMLInputElement>getReelIconElementByIndexInfo(reelIndex, iconIndex);
+                if (reelIconCountInput != null && reelIconCountInput != undefined) {
+                    
+                    let iconCount = parseInt(reelIconCountInput.value);
+                    iconInfoArray.push(new IconInfo(iconIndexArray[iconIndex], iconCount));
+                }
+                else{
+                    console.error(reelIndex + ", " + iconIndex +" input is not founded");
+                }
+            }
+            iconInfoMap.push(iconInfoArray);
+        }
+
+        console.log(iconInfoMap);
     };
 
     var saveButton = document.getElementById('saveButton');

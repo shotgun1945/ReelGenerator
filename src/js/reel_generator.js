@@ -366,17 +366,27 @@ window.onload = () => {
     ReelGeneratorButton.onclick = function () {
         if (m_ElemenetCreator == null)
             return;
+        let iconInfoMap = new Array();
+        let iconIndexArray = new Array();
+        for (let iconIndex = 0; iconIndex < m_ReelGenerator.iconCount; iconIndex++) {
+            let iconId = parseInt(getReelIconElementByIndexInfo(-1, iconIndex).value);
+            iconIndexArray.push(iconId);
+        }
         for (let reelIndex = 0; reelIndex < m_ReelGenerator.reelCount; reelIndex++) {
+            let iconInfoArray = new Array();
             for (let iconIndex = 0; iconIndex < m_ReelGenerator.iconCount; iconIndex++) {
-                let reelIconCountInput = m_ElemenetCreator.m_CreatedElementMap[getReelIconElementName(reelIndex, iconIndex)];
+                let reelIconCountInput = getReelIconElementByIndexInfo(reelIndex, iconIndex);
                 if (reelIconCountInput != null && reelIconCountInput != undefined) {
-                    let value = parseInt(reelIconCountInput.value);
+                    let iconCount = parseInt(reelIconCountInput.value);
+                    iconInfoArray.push(new IconInfo(iconIndexArray[iconIndex], iconCount));
                 }
                 else {
                     console.error(reelIndex + ", " + iconIndex + " input is not founded");
                 }
             }
+            iconInfoMap.push(iconInfoArray);
         }
+        console.log(iconInfoMap);
     };
     var saveButton = document.getElementById('saveButton');
 };
