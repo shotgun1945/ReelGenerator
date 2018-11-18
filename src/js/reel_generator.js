@@ -1,23 +1,3 @@
-class CookieUtils {
-    static setCookie(name, val) {
-        const date = new Date();
-        const value = val;
-        date.setTime(date.getTime() + (7 * 24 * 60 * 60 * 1000));
-        document.cookie = name + "=" + value + "; expires=" + date.toUTCString() + "; path=/";
-    }
-    static getCookie(name) {
-        const value = "; " + document.cookie;
-        const parts = value.split("; " + name + "=");
-        if (parts.length == 2) {
-            return parts.pop().split(";").shift();
-        }
-    }
-    static deleteCookie(name) {
-        const date = new Date();
-        date.setTime(date.getTime() + (-1 * 24 * 60 * 60 * 1000));
-        document.cookie = name + "=; expires=" + date.toUTCString() + "; path=/";
-    }
-}
 class Icon {
     constructor(iconInfo, dataIndex, reelIndex) {
         this.iconInfo = iconInfo;
@@ -305,6 +285,7 @@ function CalculateIndexWithOffset(currentIndex, offset, maxValue) {
 }
 let m_ElemenetCreator = null;
 let m_ReelGenerator = null;
+let m_inputArrayWillBeSaved = new Array();
 class Dynamically_create_element {
     constructor() {
         this.m_CreatedElementMap = new Map();
@@ -328,6 +309,15 @@ class Dynamically_create_element {
             getParent().appendChild(element);
         return element;
     }
+}
+function MakeSaveName(element) {
+    return { key: element.id, value: element.value };
+}
+function FindAndApplyValue(data) {
+    const input = document.getElementById(data.key);
+    if (input === null || input === undefined)
+        return;
+    input.value = data.value;
 }
 function getReelIconElementName(reel_index, icon_index) {
     return reel_index + "_" + icon_index;
@@ -357,28 +347,50 @@ function CalculateReelTotalIconCount(reelIndex) {
     }
     return result;
 }
-function makeReelInfoInputUi() {
+function CheckLocalStorage() {
+    if (Storage === undefined)
+        throw "Storage is undefined";
+    let savedData = localStorage.getItem("reel");
+    if (savedData === null || savedData === undefined)
+        return true;
+    return false;
+}
+function makeReelInfoInputUi(inputData = null) {
     window.onbeforeunload = function () {
         return "";
     };
-    const reelCount = parseInt(document.getElementById("reel_count_input").value);
-    const reelHeight = parseInt(document.getElementById("reel_height_input").value);
-    const reelDisplayHeight = parseInt(document.getElementById("reel_display_height_input").value);
-    const iconCount = parseInt(document.getElementById("icon_count_input").value);
+    m_inputArrayWillBeSaved.length = 0;
+    const idArray = ["reel_count_input", "reel_height_input", "reel_display_height_input", "icon_count_input"];
+    const valueArray = idArray.map((value, index) => {
+        console.log(value);
+        const element = document.getElementById(value);
+        m_inputArrayWillBeSaved.push(element);
+        return parseInt(element.value);
+    });
+    const reelCount = valueArray[0];
+    const iconCount = valueArray[1];
     if (m_ElemenetCreator == null)
         m_ElemenetCreator = new Dynamically_create_element();
     if (m_ReelGenerator == null)
-        m_ReelGenerator = new ReelGenerator(reelCount, reelHeight, reelDisplayHeight, iconCount);
+        m_ReelGenerator = new ReelGenerator(valueArray[0], valueArray[1], valueArray[2], valueArray[3]);
     let reelParent = document.getElementById("reel_info_div");
     for (let reelIndex = -1; reelIndex < reelCount; reelIndex++) {
         const reelUl = m_ElemenetCreator.CreateElementWithAttribute("ul", [["id", reelIndex == -1 ? "iconIndexInfos" : "reel_" + reelIndex]], () => { return reelParent; });
         const label = m_ElemenetCreator.CreateElementWithAttribute("label", [["id", "reel_+label_" + reelIndex]], () => { return reelUl; });
         label.innerText = reelIndex == -1 ? "iconIndex" : "reel" + reelIndex;
         const iconInputArray = m_ElemenetCreator.CreateManyElementWithAttribute("input", [["type", "number"]], () => { return reelUl; }, iconCount, (iconIndex) => getReelIconElementName(reelIndex, iconIndex));
-        iconInputArray.forEach((iconInput, iconIndex) => iconInput.setAttribute("value", reelIndex == -1 ? (iconIndex + 1).toString() : "0"));
+        iconInputArray.forEach((iconInput, iconIndex) => {
+            let defaultvalue = inputData === null ? 0 : inputData.find(value => { return value.key === iconInput.id; }).value;
+            iconInput.setAttribute("value", reelIndex == -1 ? (iconIndex + 1).toString() : defaultvalue);
+            m_inputArrayWillBeSaved.push(iconInput);
+        });
         if (reelIndex != -1) {
             const iconTotalCountLabel = m_ElemenetCreator.CreateElementWithAttribute("label", null, function () { return reelUl; });
-            const onChangeEachIconCountFunc = (reelIndex) => { iconTotalCountLabel.innerText = " total count : " + CalculateReelTotalIconCount(reelIndex).toString(); };
+            const onChangeEachIconCountFunc = (reelIndex) => {
+                const totalText = " total count : " + CalculateReelTotalIconCount(reelIndex).toString();
+                console.log(totalText);
+                iconTotalCountLabel.innerText = totalText;
+            };
             iconInputArray.forEach((iconInput) => iconInput.addEventListener("change", (ev) => onChangeEachIconCountFunc(parseElementNameToReelIconIndex(ev.target.id).reel_index)));
             onChangeEachIconCountFunc(reelIndex);
         }
@@ -386,7 +398,7 @@ function makeReelInfoInputUi() {
 }
 window.onload = () => {
     const addReelButton = document.getElementById('addReelButton');
-    addReelButton.onclick = makeReelInfoInputUi;
+    addReelButton.onclick = e => makeReelInfoInputUi();
     var ReelGeneratorButton = document.getElementById('ReelGeneratorButton');
     ReelGeneratorButton.onclick = function () {
         if (m_ElemenetCreator == null)
@@ -417,5 +429,28 @@ window.onload = () => {
         targetDiv.innerHTML = m_ReelGenerator.generator();
     };
     var saveButton = document.getElementById('saveButton');
+    saveButton.onclick = function () {
+        if (Storage !== undefined) {
+            const saveARray = m_inputArrayWillBeSaved.map(value => { return MakeSaveName(value); });
+            console.log(saveARray);
+            const jsonData = JSON.stringify(saveARray);
+            console.log(jsonData);
+            localStorage.setItem("reel", jsonData);
+        }
+    };
+    var loadButton = document.getElementById("loadButton");
+    loadButton.onclick = function () {
+        if (Storage !== undefined) {
+            if (!CheckLocalStorage()) {
+                let savedData = localStorage.getItem("reel");
+                const array = JSON.parse(savedData);
+                console.log(array);
+                array.forEach(element => {
+                    FindAndApplyValue(element);
+                });
+                makeReelInfoInputUi(array);
+            }
+        }
+    };
 };
 //# sourceMappingURL=reel_generator.js.map

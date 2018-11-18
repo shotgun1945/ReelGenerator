@@ -1,6 +1,6 @@
 let m_ElemenetCreator:Dynamically_create_element = null;
 let m_ReelGenerator:ReelGenerator = null;
-
+let m_inputArrayWillBeSaved:Array<HTMLInputElement> = new Array<HTMLInputElement>();
 class Dynamically_create_element
 {
     public m_CreatedElementMap:Map<string, HTMLElement> = new Map<string, HTMLElement>();
@@ -27,6 +27,18 @@ class Dynamically_create_element
         
         return element;
     }
+}
+
+function MakeSaveName(element:HTMLInputElement):{key:string, value:string}
+{
+    return {key:element.id, value:element.value};
+}
+
+function FindAndApplyValue(data:{key:string, value:string})
+{
+    const input = <HTMLInputElement>document.getElementById(data.key);
+    if(input === null || input === undefined) return;
+    input.value = data.value;
 }
 
 function getReelIconElementName(reel_index:number, icon_index:number):string
@@ -70,18 +82,36 @@ function CalculateReelTotalIconCount(reelIndex:number):number
     return result;
 }
 
-function makeReelInfoInputUi()
+function CheckLocalStorage():Boolean
+{
+    if(Storage === undefined) throw "Storage is undefined";
+    let savedData = localStorage.getItem("reel");
+    if(savedData === null || savedData === undefined) return true;
+    return false;
+}
+
+function makeReelInfoInputUi(inputData:any = null)
 {
     window.onbeforeunload = function() {
         return "";
     }   
-    const reelCount = parseInt((<HTMLInputElement>document.getElementById("reel_count_input")).value);
-    const reelHeight = parseInt((<HTMLInputElement>document.getElementById("reel_height_input")).value);
-    const reelDisplayHeight = parseInt((<HTMLInputElement>document.getElementById("reel_display_height_input")).value);
-    const iconCount = parseInt((<HTMLInputElement>document.getElementById("icon_count_input")).value);
-    
+
+    m_inputArrayWillBeSaved.length = 0;
+    const idArray = ["reel_count_input", "reel_height_input", "reel_display_height_input", "icon_count_input"];
+    const valueArray = idArray.map(
+        (value:string, index:number)=>{
+            console.log(value);
+            
+            const element = <HTMLInputElement>document.getElementById(value);
+            m_inputArrayWillBeSaved.push(element);
+            return parseInt(element.value);
+        }
+    )
+    const reelCount = valueArray[0];
+    const iconCount = valueArray[1];
+        
     if(m_ElemenetCreator == null) m_ElemenetCreator = new Dynamically_create_element();
-    if(m_ReelGenerator == null) m_ReelGenerator = new ReelGenerator(reelCount, reelHeight, reelDisplayHeight, iconCount );
+    if(m_ReelGenerator == null) m_ReelGenerator = new ReelGenerator(valueArray[0], valueArray[1], valueArray[2], valueArray[3] );
     
     let reelParent = document.getElementById("reel_info_div");
     for (let reelIndex = -1; reelIndex < reelCount; reelIndex++) {
@@ -91,11 +121,20 @@ function makeReelInfoInputUi()
         label.innerText = reelIndex == -1 ? "iconIndex" : "reel" + reelIndex;
 
         const iconInputArray = m_ElemenetCreator.CreateManyElementWithAttribute("input", [["type", "number"]], ()=> { return reelUl; }, iconCount, (iconIndex)=>getReelIconElementName(reelIndex, iconIndex));
-        iconInputArray.forEach((iconInput, iconIndex)=>iconInput.setAttribute("value", reelIndex == -1 ? (iconIndex+1).toString(): "0"));
+        iconInputArray.forEach((iconInput, iconIndex)=>
+        {
+            let defaultvalue = inputData === null? 0 : inputData.find(value=>{return value.key === iconInput.id}).value;
+            iconInput.setAttribute("value", reelIndex == -1 ? (iconIndex+1).toString(): defaultvalue);
+            m_inputArrayWillBeSaved.push(<HTMLInputElement>iconInput);
+        });
         // ["value", defaultValue.toString()],
         if(reelIndex != -1 ) {
             const iconTotalCountLabel = m_ElemenetCreator.CreateElementWithAttribute("label", null, function():HTMLElement { return reelUl; });
-            const onChangeEachIconCountFunc = (reelIndex:number)=>{iconTotalCountLabel.innerText = " total count : "+CalculateReelTotalIconCount(reelIndex).toString()}
+            const onChangeEachIconCountFunc = (reelIndex:number)=>{
+                const totalText = " total count : "+CalculateReelTotalIconCount(reelIndex).toString();
+                console.log(totalText);
+                iconTotalCountLabel.innerText = totalText;
+            }
             iconInputArray.forEach((iconInput)=>iconInput.addEventListener("change", (ev:Event) => onChangeEachIconCountFunc( parseElementNameToReelIconIndex( (<HTMLElement>ev.target).id).reel_index)));
             onChangeEachIconCountFunc(reelIndex);
         }
@@ -106,7 +145,7 @@ window.onload = () =>
 {
     const addReelButton = document.getElementById('addReelButton');
     
-    addReelButton.onclick = makeReelInfoInputUi;
+    addReelButton.onclick = e=>makeReelInfoInputUi();
 
     var ReelGeneratorButton = document.getElementById('ReelGeneratorButton');
     ReelGeneratorButton.onclick = function():void
@@ -144,5 +183,44 @@ window.onload = () =>
     };
 
     var saveButton = document.getElementById('saveButton');
-    // saveButton.onclick
+    saveButton.onclick = function(){
+        if(Storage !== undefined)
+        {
+            const saveARray = m_inputArrayWillBeSaved.map(value=>{ return MakeSaveName(value);})
+            let targetDiv = document.getElementById("reel_gen_div");
+            saveARray.push({key:targetDiv.id, value:targetDiv.innerHTML});
+            console.log(saveARray);
+            const jsonData = JSON.stringify(saveARray);
+            console.log(jsonData);
+            localStorage.setItem("reel", jsonData);
+        }
+    };
+
+    var loadButton = document.getElementById("loadButton");
+    loadButton.onclick = function()
+    {
+        if(Storage !== undefined)
+        {
+            if(!CheckLocalStorage())
+            {
+                let savedData = localStorage.getItem("reel");
+                const array = JSON.parse(savedData);
+                console.log(array);
+                array.forEach(element => {
+                    FindAndApplyValue(element);
+                });
+                makeReelInfoInputUi(array);
+                
+                let targetData = array.find(data=>{
+                    return "reel_gen_div" === data.key;
+                })
+                if(targetData !== undefined && targetData!== null)
+                {
+                    let targetDiv = document.getElementById("reel_gen_div");
+                    targetDiv.innerHTML = targetData.value;
+                }
+    
+            }
+        }
+    }
 };
