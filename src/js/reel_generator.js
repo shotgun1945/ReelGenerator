@@ -69,6 +69,9 @@ class Reel {
         }
         return result;
     }
+    clearIconInfo() {
+        this.IconInfoArray.length = 0;
+    }
     setIconInfoArray(iconInfos) {
         iconInfos.forEach(iconInfo => {
             const sameIcon = this.IconInfoArray.find(element => element.IsSameIcon(iconInfo, true));
@@ -173,6 +176,9 @@ class Reel {
         }
         return isSuccessed;
     }
+    GetIconString() {
+        return PrintIconArray(this.sortedIconDataArray);
+    }
 }
 function PrintIconArray(array) {
     let resultString = "";
@@ -195,7 +201,7 @@ class ReelGenerator {
         this._reelDisplayHeight = _reelDisplayHeight;
         this._iconCount = _iconCount;
         this.ReelInfoArray = new Array();
-        for (let i = 0; i < this.ReelInfoArray.length; i++) {
+        for (let i = 0; i < _reelCount; i++) {
             this.ReelInfoArray.push(new Reel(i, _reelHeight, _reelDisplayHeight));
         }
     }
@@ -209,10 +215,13 @@ class ReelGenerator {
         if (value > 0)
             this._reelCount = value;
     }
-    AddIconInfo(reelIndex, infos) {
-        if (this.ReelInfoArray.length >= reelIndex) {
-            console.error("ReelInfoArray length is greater than input reel Index");
+    SetIconInfo(reelIndex, infos, overwrite) {
+        if (this.ReelInfoArray.length <= reelIndex) {
+            console.error("ReelInfoArray length is greater than input reel Index / length : " + this.ReelInfoArray.length + ", reelIndex : " + reelIndex);
             return;
+        }
+        if (overwrite) {
+            this.ReelInfoArray[reelIndex].clearIconInfo();
         }
         this.ReelInfoArray[reelIndex].setIconInfoArray(infos);
     }
@@ -228,6 +237,18 @@ class ReelGenerator {
         let result = reel.generator();
         console.log(PrintIconArray(result));
         this.VerrifyResult(result, iconInfoArray);
+    }
+    generator() {
+        let resultStringArray = this.ReelInfoArray.map((reel) => {
+            reel.generator();
+            return reel.GetIconString();
+        });
+        let result = "";
+        resultStringArray.forEach(element => {
+            result += element + "<br/>";
+        });
+        ;
+        return result;
     }
     VerrifyResult(result, iconInfoArray) {
         let index = 0;
@@ -337,6 +358,9 @@ function CalculateReelTotalIconCount(reelIndex) {
     return result;
 }
 function makeReelInfoInputUi() {
+    window.onbeforeunload = function () {
+        return "";
+    };
     const reelCount = parseInt(document.getElementById("reel_count_input").value);
     const reelHeight = parseInt(document.getElementById("reel_height_input").value);
     const reelDisplayHeight = parseInt(document.getElementById("reel_display_height_input").value);
@@ -345,7 +369,7 @@ function makeReelInfoInputUi() {
         m_ElemenetCreator = new Dynamically_create_element();
     if (m_ReelGenerator == null)
         m_ReelGenerator = new ReelGenerator(reelCount, reelHeight, reelDisplayHeight, iconCount);
-    let reelParent = document.getElementById("reel_gen_div");
+    let reelParent = document.getElementById("reel_info_div");
     for (let reelIndex = -1; reelIndex < reelCount; reelIndex++) {
         const reelUl = m_ElemenetCreator.CreateElementWithAttribute("ul", [["id", reelIndex == -1 ? "iconIndexInfos" : "reel_" + reelIndex]], () => { return reelParent; });
         const label = m_ElemenetCreator.CreateElementWithAttribute("label", [["id", "reel_+label_" + reelIndex]], () => { return reelUl; });
@@ -356,6 +380,7 @@ function makeReelInfoInputUi() {
             const iconTotalCountLabel = m_ElemenetCreator.CreateElementWithAttribute("label", null, function () { return reelUl; });
             const onChangeEachIconCountFunc = (reelIndex) => { iconTotalCountLabel.innerText = " total count : " + CalculateReelTotalIconCount(reelIndex).toString(); };
             iconInputArray.forEach((iconInput) => iconInput.addEventListener("change", (ev) => onChangeEachIconCountFunc(parseElementNameToReelIconIndex(ev.target.id).reel_index)));
+            onChangeEachIconCountFunc(reelIndex);
         }
     }
 }
@@ -385,8 +410,11 @@ window.onload = () => {
                 }
             }
             iconInfoMap.push(iconInfoArray);
+            m_ReelGenerator.SetIconInfo(reelIndex, iconInfoArray, true);
         }
         console.log(iconInfoMap);
+        let targetDiv = document.getElementById("reel_gen_div");
+        targetDiv.innerHTML = m_ReelGenerator.generator();
     };
     var saveButton = document.getElementById('saveButton');
 };

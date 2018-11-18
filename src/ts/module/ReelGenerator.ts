@@ -18,7 +18,7 @@ function PrintIconInfoArray(array: Array<IconInfo>): string {
 class ReelGenerator {
   constructor(private _reelCount:number, private _reelHeight:number, private _reelDisplayHeight:number, private _iconCount:number) {
     this.ReelInfoArray = new Array<Reel>();
-    for (let i = 0; i < this.ReelInfoArray.length; i++) {
+    for (let i = 0; i < _reelCount; i++) {
       this.ReelInfoArray.push(new Reel(i, _reelHeight, _reelDisplayHeight));
     }
   }
@@ -37,14 +37,24 @@ class ReelGenerator {
   /**
    * AddIconInfo
    */
-  public AddIconInfo(reelIndex:number, infos:IconInfo[]) {
-    if(this.ReelInfoArray.length >= reelIndex)
+  public SetIconInfo(reelIndex:number, infos:IconInfo[], overwrite:boolean) {
+    if(this.ReelInfoArray.length <= reelIndex)
     {
-      console.error("ReelInfoArray length is greater than input reel Index");
+      console.error("ReelInfoArray length is greater than input reel Index / length : "+this.ReelInfoArray.length + ", reelIndex : " + reelIndex);
       return;
+    }
+    if(overwrite)
+    {
+      this.ReelInfoArray[reelIndex].clearIconInfo();
     }
     this.ReelInfoArray[reelIndex].setIconInfoArray(infos);
   }
+  // public AddReel(infos:IconInfo[]) {
+  //   let id =this.ReelInfoArray.length + 1;
+  //   new Reel(id, this.reelCount, this._reelDisplayHeight);
+  //   this.ReelInfoArray.push()
+  //   this.ReelInfoArray[].setIconInfoArray(infos);
+  // }
   public testMain() {
     //TODO:TESTVALUE
   
@@ -60,6 +70,21 @@ class ReelGenerator {
     let result: Array<Icon> = reel.generator();
     console.log(PrintIconArray(result));
     this.VerrifyResult(result, iconInfoArray);
+  }
+
+  public generator():string{
+    let resultStringArray = this.ReelInfoArray.map((reel:Reel):string=>
+    {
+      reel.generator();
+      
+      return reel.GetIconString();
+    });
+    let result:string = "";
+    resultStringArray.forEach(element => {
+      result += element + "<br/>"  
+    });;
+
+    return result;
   }
   
   public VerrifyResult(result: Array<Icon>, iconInfoArray: Array<IconInfo>) {

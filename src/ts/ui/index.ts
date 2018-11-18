@@ -72,14 +72,18 @@ function CalculateReelTotalIconCount(reelIndex:number):number
 
 function makeReelInfoInputUi()
 {
+    window.onbeforeunload = function() {
+        return "";
+    }   
     const reelCount = parseInt((<HTMLInputElement>document.getElementById("reel_count_input")).value);
     const reelHeight = parseInt((<HTMLInputElement>document.getElementById("reel_height_input")).value);
     const reelDisplayHeight = parseInt((<HTMLInputElement>document.getElementById("reel_display_height_input")).value);
     const iconCount = parseInt((<HTMLInputElement>document.getElementById("icon_count_input")).value);
+    
     if(m_ElemenetCreator == null) m_ElemenetCreator = new Dynamically_create_element();
     if(m_ReelGenerator == null) m_ReelGenerator = new ReelGenerator(reelCount, reelHeight, reelDisplayHeight, iconCount );
     
-    let reelParent = document.getElementById("reel_gen_div");
+    let reelParent = document.getElementById("reel_info_div");
     for (let reelIndex = -1; reelIndex < reelCount; reelIndex++) {
 
         const reelUl = m_ElemenetCreator.CreateElementWithAttribute("ul", [["id", reelIndex == -1 ? "iconIndexInfos" : "reel_"+reelIndex ]], ()=>{return reelParent} );
@@ -93,7 +97,7 @@ function makeReelInfoInputUi()
             const iconTotalCountLabel = m_ElemenetCreator.CreateElementWithAttribute("label", null, function():HTMLElement { return reelUl; });
             const onChangeEachIconCountFunc = (reelIndex:number)=>{iconTotalCountLabel.innerText = " total count : "+CalculateReelTotalIconCount(reelIndex).toString()}
             iconInputArray.forEach((iconInput)=>iconInput.addEventListener("change", (ev:Event) => onChangeEachIconCountFunc( parseElementNameToReelIconIndex( (<HTMLElement>ev.target).id).reel_index)));
-            
+            onChangeEachIconCountFunc(reelIndex);
         }
     }
 }
@@ -107,6 +111,7 @@ window.onload = () =>
     var ReelGeneratorButton = document.getElementById('ReelGeneratorButton');
     ReelGeneratorButton.onclick = function():void
     {
+        
         if(m_ElemenetCreator == null) return;
         let iconInfoMap:Array<Array<IconInfo>> = new Array<Array<IconInfo>>();
         let iconIndexArray:Array<number> = new Array<number>();
@@ -128,9 +133,14 @@ window.onload = () =>
                 }
             }
             iconInfoMap.push(iconInfoArray);
+            
+            m_ReelGenerator.SetIconInfo(reelIndex, iconInfoArray, true);
         }
 
         console.log(iconInfoMap);
+
+        let targetDiv = document.getElementById("reel_gen_div");
+        targetDiv.innerHTML = m_ReelGenerator.generator();
     };
 
     var saveButton = document.getElementById('saveButton');

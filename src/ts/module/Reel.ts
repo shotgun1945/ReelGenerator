@@ -22,6 +22,9 @@ class Reel
         this.IconInfoArray = new Array<IconInfo>();
     }
 
+    public clearIconInfo():void{
+        this.IconInfoArray.length = 0;
+    }
     public setIconInfoArray(iconInfos: IconInfo[]) {
         iconInfos.forEach(iconInfo => {
             const sameIcon = this.IconInfoArray.find(element => element.IsSameIcon(iconInfo, true));
@@ -157,4 +160,10 @@ class Reel
 
         return isSuccessed;
     }
+
+    public GetIconString():string
+    {
+        return PrintIconArray(this.sortedIconDataArray);
+    }
+    
 }
