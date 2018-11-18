@@ -34,7 +34,7 @@ class Reel {
         this.index = index;
         this.length = length;
         this.reelDisplayHeight = reelDisplayHeight;
-        this.sortedIconDataArray = new Array(length);
+        this._sortedIconDataArray = new Array(length);
         this.notSoredIconDataArray = new Array(length);
         this.IconInfoArray = new Array();
     }
@@ -48,6 +48,9 @@ class Reel {
             }
         }
         return result;
+    }
+    get SortedIconDataArray() {
+        return this._sortedIconDataArray;
     }
     clearIconInfo() {
         this.IconInfoArray.length = 0;
@@ -76,11 +79,11 @@ class Reel {
             if (index === currentIndex) {
                 continue;
             }
-            if (this.sortedIconDataArray[index] === null ||
-                this.sortedIconDataArray[index] === undefined) {
+            if (this._sortedIconDataArray[index] === null ||
+                this._sortedIconDataArray[index] === undefined) {
                 continue;
             }
-            if (this.sortedIconDataArray[index].iconInfo.IsSameIcon(newIconInfo, false)) {
+            if (this._sortedIconDataArray[index].iconInfo.IsSameIcon(newIconInfo, false)) {
                 result = true;
                 break;
             }
@@ -118,13 +121,13 @@ class Reel {
                 " != length + " +
                 length;
         }
-        return this.sortedIconDataArray;
+        return this._sortedIconDataArray;
     }
     SetIconInIndex(iconInfo, currentIndex, decereaseRemainCount) {
-        if (this.sortedIconDataArray[currentIndex] != null) {
+        if (this._sortedIconDataArray[currentIndex] != null) {
             console.log("seticoninIndex erreor position " + currentIndex + "is not null ");
         }
-        this.sortedIconDataArray[currentIndex] = new Icon(iconInfo, currentIndex, this.index);
+        this._sortedIconDataArray[currentIndex] = new Icon(iconInfo, currentIndex, this.index);
         if (decereaseRemainCount) {
             iconInfo.remainCount--;
         }
@@ -133,7 +136,7 @@ class Reel {
         if (currentIndex === this.length)
             return true;
         let isSuccessed = false;
-        if (this.sortedIconDataArray[currentIndex] == null) {
+        if (this._sortedIconDataArray[currentIndex] == null) {
             const currentlist = this.GetNextList(currentIndex);
             console.log(currentIndex, " currentlist : ", PrintIconInfoArray(currentlist));
             for (let i = 0; i < currentlist.length; i++) {
@@ -148,7 +151,7 @@ class Reel {
                 }
             }
             if (!isSuccessed) {
-                this.sortedIconDataArray[currentIndex] = null;
+                this._sortedIconDataArray[currentIndex] = null;
             }
         }
         else {
@@ -157,7 +160,10 @@ class Reel {
         return isSuccessed;
     }
     GetIconString() {
-        return PrintIconArray(this.sortedIconDataArray);
+        return PrintIconArray(this._sortedIconDataArray);
+    }
+    ClearGeneratedReelIconArray() {
+        this._sortedIconDataArray.length = 0;
     }
 }
 function PrintIconArray(array) {
@@ -219,16 +225,21 @@ class ReelGenerator {
         this.VerrifyResult(result, iconInfoArray);
     }
     generator() {
-        let resultStringArray = this.ReelInfoArray.map((reel) => {
+        this.ReelInfoArray.forEach((reel) => {
+            reel.ClearGeneratedReelIconArray();
             reel.generator();
-            return reel.GetIconString();
         });
-        let result = "";
-        resultStringArray.forEach(element => {
-            result += element + "<br/>";
+    }
+    getAllIconInfo() {
+        return this.ReelInfoArray.map(reel => { return reel.SortedIconDataArray; });
+    }
+    geAllIconInfoString() {
+        let resultString = "";
+        this.ReelInfoArray.forEach(reel => {
+            resultString += reel.GetIconString();
+            resultString += "<br/>";
         });
-        ;
-        return result;
+        return resultString;
     }
     VerrifyResult(result, iconInfoArray) {
         let index = 0;
@@ -425,13 +436,33 @@ window.onload = () => {
             m_ReelGenerator.SetIconInfo(reelIndex, iconInfoArray, true);
         }
         console.log(iconInfoMap);
+        m_ReelGenerator.generator();
         let targetDiv = document.getElementById("reel_gen_div");
-        targetDiv.innerHTML = m_ReelGenerator.generator();
+        targetDiv.innerHTML = "";
+        const allReelIconInfo = m_ReelGenerator.getAllIconInfo();
+        allReelIconInfo.forEach((reelIcon, reelIndex) => {
+            const parentDiv = m_ElemenetCreator.CreateElementWithAttribute("div", null, () => { return targetDiv; });
+            reelIcon.forEach(icon => {
+                const element = m_ElemenetCreator.CreateElementWithAttribute("div", [["draggable", "true"]], () => { return parentDiv; });
+                element.style.display = "inline-block";
+                element.style.width = "20px";
+                element.style.height = "20px";
+                element.style.margin = "1px";
+                element.style.border = "1px solid black";
+                element.innerHTML = icon.iconInfo.iconId.toString();
+                element.click = function () {
+                };
+            });
+        });
+        targetDiv.innerHTML += m_ReelGenerator.geAllIconInfoString();
+        ;
     };
     var saveButton = document.getElementById('saveButton');
     saveButton.onclick = function () {
         if (Storage !== undefined) {
             const saveARray = m_inputArrayWillBeSaved.map(value => { return MakeSaveName(value); });
+            let targetDiv = document.getElementById("reel_gen_div");
+            saveARray.push({ key: targetDiv.id, value: targetDiv.innerHTML });
             console.log(saveARray);
             const jsonData = JSON.stringify(saveARray);
             console.log(jsonData);
@@ -449,6 +480,13 @@ window.onload = () => {
                     FindAndApplyValue(element);
                 });
                 makeReelInfoInputUi(array);
+                let targetData = array.find(data => {
+                    return "reel_gen_div" === data.key;
+                });
+                if (targetData !== undefined && targetData !== null) {
+                    let targetDiv = document.getElementById("reel_gen_div");
+                    targetDiv.innerHTML = targetData.value;
+                }
             }
         }
     };

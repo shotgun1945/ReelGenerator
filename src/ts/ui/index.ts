@@ -127,7 +127,6 @@ function makeReelInfoInputUi(inputData:any = null)
             iconInput.setAttribute("value", reelIndex == -1 ? (iconIndex+1).toString(): defaultvalue);
             m_inputArrayWillBeSaved.push(<HTMLInputElement>iconInput);
         });
-        // ["value", defaultValue.toString()],
         if(reelIndex != -1 ) {
             const iconTotalCountLabel = m_ElemenetCreator.CreateElementWithAttribute("label", null, function():HTMLElement { return reelUl; });
             const onChangeEachIconCountFunc = (reelIndex:number)=>{
@@ -150,7 +149,6 @@ window.onload = () =>
     var ReelGeneratorButton = document.getElementById('ReelGeneratorButton');
     ReelGeneratorButton.onclick = function():void
     {
-        
         if(m_ElemenetCreator == null) return;
         let iconInfoMap:Array<Array<IconInfo>> = new Array<Array<IconInfo>>();
         let iconIndexArray:Array<number> = new Array<number>();
@@ -178,8 +176,28 @@ window.onload = () =>
 
         console.log(iconInfoMap);
 
+        m_ReelGenerator.generator();
         let targetDiv = document.getElementById("reel_gen_div");
-        targetDiv.innerHTML = m_ReelGenerator.generator();
+        targetDiv.innerHTML = "";
+        const allReelIconInfo = m_ReelGenerator.getAllIconInfo();
+        allReelIconInfo.forEach((reelIcon:Icon[], reelIndex:number) => {
+            const parentDiv = m_ElemenetCreator.CreateElementWithAttribute("div", null, ()=>{return targetDiv});
+            reelIcon.forEach(icon=>
+                {
+                    const element = m_ElemenetCreator.CreateElementWithAttribute("div", [["draggable", "true"]], ()=>{return parentDiv});
+                    element.style.display = "inline-block";
+                    element.style.width  = "20px";
+                    element.style.height = "20px";
+                    element.style.margin = "1px";
+                    element.style.border = "1px solid black";
+                    element.innerHTML = icon.iconInfo.iconId.toString();
+
+                    element.click = function():void
+                    {
+                    }
+                });
+        });
+        targetDiv.innerHTML += m_ReelGenerator.geAllIconInfoString();;
     };
 
     var saveButton = document.getElementById('saveButton');

@@ -13,11 +13,14 @@ class Reel
 
         return result;
     }
-    private sortedIconDataArray: Icon[];
+    private _sortedIconDataArray: Icon[];
+    public get SortedIconDataArray(): Icon[] {
+        return this._sortedIconDataArray;
+    }
     private notSoredIconDataArray: Icon[];
     private IconInfoArray: IconInfo[];
     constructor(public index: number, public length: number, public reelDisplayHeight:number) {
-        this.sortedIconDataArray = new Array<Icon>(length);
+        this._sortedIconDataArray = new Array<Icon>(length);
         this.notSoredIconDataArray = new Array<Icon>(length);
         this.IconInfoArray = new Array<IconInfo>();
     }
@@ -54,14 +57,14 @@ class Reel
             continue;
         }
         if (
-            this.sortedIconDataArray[index] === null ||
-            this.sortedIconDataArray[index] === undefined
+            this._sortedIconDataArray[index] === null ||
+            this._sortedIconDataArray[index] === undefined
         ) {
             continue;
         }
 
         if (
-            this.sortedIconDataArray[index].iconInfo.IsSameIcon(newIconInfo, false)
+            this._sortedIconDataArray[index].iconInfo.IsSameIcon(newIconInfo, false)
         ) {
             result = true;
             break;
@@ -106,15 +109,15 @@ class Reel
                 length;
         }
 
-        return this.sortedIconDataArray;
+        return this._sortedIconDataArray;
     }
 
     public SetIconInIndex(iconInfo:IconInfo, currentIndex:number, decereaseRemainCount:boolean)
     {
-        if(this.sortedIconDataArray[currentIndex] != null){
+        if(this._sortedIconDataArray[currentIndex] != null){
             console.log("seticoninIndex erreor position " + currentIndex+ "is not null " );
         }
-        this.sortedIconDataArray[currentIndex] = new Icon(
+        this._sortedIconDataArray[currentIndex] = new Icon(
             iconInfo,
             currentIndex,
             this.index
@@ -128,7 +131,7 @@ class Reel
     public FindNextIcon(currentIndex: number): boolean {
         if (currentIndex === this.length) return true;
         let isSuccessed = false;
-        if(this.sortedIconDataArray[currentIndex] == null)
+        if(this._sortedIconDataArray[currentIndex] == null)
         {
             const currentlist: Array<IconInfo> = this.GetNextList(currentIndex);
             console.log(currentIndex, " currentlist : ", PrintIconInfoArray(currentlist));
@@ -150,7 +153,7 @@ class Reel
             }
 
             if (!isSuccessed) {
-                this.sortedIconDataArray[currentIndex] = null;
+                this._sortedIconDataArray[currentIndex] = null;
             }
         }
         else
@@ -163,7 +166,12 @@ class Reel
 
     public GetIconString():string
     {
-        return PrintIconArray(this.sortedIconDataArray);
+        return PrintIconArray(this._sortedIconDataArray);
+    }
+
+    public ClearGeneratedReelIconArray()
+    {
+        this._sortedIconDataArray.length = 0;
     }
     
 }

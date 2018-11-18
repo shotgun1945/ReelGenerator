@@ -72,19 +72,28 @@ class ReelGenerator {
     this.VerrifyResult(result, iconInfoArray);
   }
 
-  public generator():string{
-    let resultStringArray = this.ReelInfoArray.map((reel:Reel):string=>
+  public generator(){
+    this.ReelInfoArray.forEach((reel:Reel)=>
     {
+      reel.ClearGeneratedReelIconArray();
       reel.generator();
-      
-      return reel.GetIconString();
     });
-    let result:string = "";
-    resultStringArray.forEach(element => {
-      result += element + "<br/>"  
-    });;
+  }
 
-    return result;
+  public getAllIconInfo()
+  {
+    return this.ReelInfoArray.map(reel=>{return reel.SortedIconDataArray;});
+  }
+  
+  public geAllIconInfoString()
+  {
+    let resultString="";
+    this.ReelInfoArray.forEach(reel=>
+      {
+        resultString += reel.GetIconString();
+        resultString += "<br/>"
+      });
+    return resultString;
   }
   
   public VerrifyResult(result: Array<Icon>, iconInfoArray: Array<IconInfo>) {
